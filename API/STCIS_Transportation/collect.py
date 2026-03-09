@@ -15,39 +15,50 @@ import pandas as pd
 import json
 from time import sleep
 import os
+from pathlib import Path
 
 from session import *
 from fetch import *
 
+ROOT_DIR = Path(__file__).resolve().parents[0]
+RAW_DIR = ROOT_DIR/"datasets"/"raw"
+
 def run_collection(
-        requested_date: str, # 수집을 요청하는 날짜,
+        requested_date: str, # 수집하는 날짜
         destination_emdCd: str, # 목적지의 읍면동 코드
         destination_emdNm: str, # 목적지의 이름 (광화문/여의도/성수/강남)
-        hour_from: int, # 수집을 시작하는 시간,
-        hour_to: int, # 수집을 종료하는 시간,
-        date_from: str, # 수집을 하는 시작 날짜,
-        date_to: str, # 수집을 하는 종료 날짜,
         pause_second: int, # API 호출 시 호출 간격 설정,
 ) -> None:
     # 1. .env 파일의 환경변수를 로드한다.
     load_dotenv()
     apikey = os.getenv("STCIS_API_KEY")
+    if not apikey:
+        raise ValueError("STCIS_API_KEY is not set.")
 
     # 2. Session을 만든다.
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
     session = make_session()
+    try:
+        # 3. area_codes를 dataframe으로 추출한 후 서울 대상으로만 필터링한다.
+        area_codes = fetch_area_codes(session, apikey)
+        area_codes = area_codes.loc[area_codes["sdCd"].eq("11")].copy()
 
-    # 3. area_codes를 dataframe으로 추출한 후 서울 대상으로만 필터링한다.
-    area_codes = fetch_area_codes(session, apikey)
-    area_codes = area_codes 중에서 시도가 서울인것만을 대상
-
-    # 4. 모든 시도/군구/읍면동 에서 (광화문/여의도/성수/강남)로 걸리는 시간 API 호출한다. 
-    collect_quater_od()
-
-    # 5. 출발지를 군구 단위로 묶는다.
-    build_gu_aggregate()
-
-    # 6. csv로 저장한다.
-    save_to_csv()
-
-    # 7. session을 종료한다.
-    session.close()
+        # 4. 모든 시도/군구/읍면동 에서 목적지로 걸리는 시간 API를 호출한다.
+        frame = fetch_od(
+            session=session,
+            apikey=apikey,
+            opratDate=requested_date,
+            origins=area_codes,
+            destination_emd_cd=destination_emdCd,
+            pause_second=pause_second,
+        )
+        frame = frame.sort_values(
+            ["opratDate", "stgSggCd", "stgEmdCd", "tzon", "quater"]
+        ).reset_index(drop=True)
+        frame.to_csv(
+            RAW_DIR / f"{destination_emdNm} 교통카드_{requested_date}.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
+    finally:
+        session.close()

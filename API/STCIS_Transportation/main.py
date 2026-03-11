@@ -1,12 +1,12 @@
 from collect import *
 import argparse
 
-DESTINATION_EMD_CD = "1168010100"
-DESTINATION_NAME = "강남"
+DESTINATION_EMD_CD = "1120011400"
+DESTINATION_NAME = "성수동1가"
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--date", default="20260225")
+    parser.add_argument("--date", default="20260224")
     parser.add_argument("--pause-seconds", type=float, default=0.05)
     args = parser.parse_args()
 

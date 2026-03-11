@@ -19,6 +19,12 @@ def fetch_area_codes(session: requests.Session, apikey: str) -> pd.DataFrame:
             emd_data = call_api(session, end_point="areacode.json", 
                                 params = {"apikey":apikey, "sdCd":sd_cd, "sggCd":sgg_cd})
 
+            result = emd_data.get("result", [])
+            for item in result:
+                rows.append(dict(item))
+            sleep(0.05)
+
+            '''
             for emd_result in emd_data.get("result", []):
                 rows.append(
                     {
@@ -29,8 +35,7 @@ def fetch_area_codes(session: requests.Session, apikey: str) -> pd.DataFrame:
                         "emdCd": str(emd_result.get("emdCd")),
                         "emdNm": emd_result.get("emdNm"),
                     }
-                )
-        sleep(0.05)
+                )'''
     sleep(0.05)
 
     area_code_frame = pd.DataFrame(rows)

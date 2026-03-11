@@ -39,11 +39,20 @@ def run_collection(
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     session = make_session()
     try:
-        # 3. area_codes를 dataframe으로 추출한 후 서울 대상으로만 필터링한다.
-        area_codes = fetch_area_codes(session, apikey)
+        # 3. area_codes가 이미 있는경우 csv 파일을 호출한다.
+        AREA_DIR = "stcis_areacodes.csv"
+        if Path(RAW_DIR/AREA_DIR).exists():
+            area_codes = pd.read_csv(RAW_DIR/AREA_DIR)
+
+        else:
+            # 4. area_codes가 없는 경우 API 호출하고 csv로 저장한다.
+            area_codes = fetch_area_codes(session, apikey)
+            area_codes.to_csv(RAW_DIR/AREA_DIR, index=False, encoding="utf-8-sig")
+
+        # 5. area_code를 서울 대상으로만 필터링한다.
         area_codes = area_codes.loc[area_codes["sdCd"].eq("11")].copy()
 
-        # 4. 모든 시도/군구/읍면동 에서 목적지로 걸리는 시간 API를 호출한다.
+        # 6. 모든 시도/군구/읍면동 에서 목적지로 걸리는 시간 API를 호출한다.
         frame = fetch_od(
             session=session,
             apikey=apikey,

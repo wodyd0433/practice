@@ -28,7 +28,7 @@ def run_collection(
         destination_emdCd: str, # 목적지의 읍면동 코드
         destination_emdNm: str, # 목적지의 이름 (광화문/여의도/성수/강남)
         pause_second: int, # API 호출 시 호출 간격 설정,
-) -> None:
+) -> pd.DataFrame:
     # 1. .env 파일의 환경변수를 로드한다.
     load_dotenv()
     apikey = os.getenv("STCIS_API_KEY")
@@ -69,5 +69,6 @@ def run_collection(
             index=False,
             encoding="utf-8-sig",
         )
+        return frame
     finally:
         session.close()

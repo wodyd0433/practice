@@ -2,27 +2,27 @@ from collect import *
 from aggregate import *
 import argparse
 
-DESTINATION_EMD_CD = "1120011400"
-DESTINATION_NAME = "성수동1가"
+destinations = [
+    {"emd_cd": "1120011500", "name": "성수동2가", "date": "20260224"},
+    {"emd_cd": "1120011400", "name": "성수동1가", "date": "20260224"},
+    ]
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--date", default="20260224")
-    parser.add_argument("--pause-seconds", type=float, default=0.05)
-    args = parser.parse_args()
+    for destination in destinations:
 
-    aggregated_frame = run_collection(
-        requested_date = args.date,
-        destination_emdCd = DESTINATION_EMD_CD,
-        destination_emdNm = DESTINATION_NAME,
-        pause_second = args.pause_seconds,
-    )
+        frame = run_collection(
+            requested_date = destination["date"],
+            destination_emdCd = destination["emd_cd"],
+            destination_emdNm = destination["name"],
+            pause_second = 0.05,
+        )
 
-    aggregate_gu(
-        aggregated_frame,
-        requested_date = args.date,
-        destination_emdCd = DESTINATION_EMD_CD,
-        destination_emdNm = DESTINATION_NAME)
+        aggregate_gu(
+            frame,
+            requested_date = destination["date"],
+            destination_emdCd = destination["emd_cd"],
+            destination_emdNm = destination["name"]
+            )
 
 if __name__ == "__main__":
     main()

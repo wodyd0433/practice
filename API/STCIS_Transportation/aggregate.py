@@ -36,6 +36,7 @@ def aggregate_gu(
         "quater",
     ]
 
+    '''
     grouped = (
         working.groupby(keys, dropna=False).apply(
             lambda group: pd.Series(
@@ -45,9 +46,23 @@ def aggregate_gu(
                     "useTm":(group["useStf"]*group["useTm"]).sum() / group["useStf"].sum(),
                 }
             ),
+            include_groups=False
         )
         .reset_index()
     )
+    '''
+    working["weighted_useTm"] = working["useStf"]*working["useTm"]
+    grouped = (
+        working.groupby(keys, dropna=False)
+        .agg(
+            origin_emd_count=("stgEmdCd", lambda s: int(s.nunique())),
+            useStf=("useStf", lambda s: int(s.sum())),
+            weighted_useTm=("weighted_useTm", "sum"),
+        )
+        .reset_index()
+    )
+    grouped["useTm"]=(grouped["weighted_useTm"] / grouped["useStf"]).round(2)
+    grouped=grouped.drop(columns=["weighted_useTm"])
 
     grouped.to_csv(RAW_DIR/f"구단위 {destination_emdNm} 평균 소요시간_{requested_date}.csv",
                    index=False,

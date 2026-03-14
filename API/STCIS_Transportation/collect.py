@@ -27,8 +27,13 @@ def run_collection(
         requested_date: str, # 수집하는 날짜
         destination_emdCd: str, # 목적지의 읍면동 코드
         destination_emdNm: str, # 목적지의 이름 (광화문/여의도/성수/강남)
-        pause_second: int, # API 호출 시 호출 간격 설정,
+        pause_second: float, # API 호출 시 호출 간격 설정,
 ) -> pd.DataFrame:
+    # 이미 호출된 데이터가 있으면 skip한다.
+    if Path(RAW_DIR / f"{destination_emdNm} 교통카드_{requested_date}.csv").exists():
+        frame = pd.read_csv(RAW_DIR / f"{destination_emdNm} 교통카드_{requested_date}.csv")
+        return frame
+    
     # 1. .env 파일의 환경변수를 로드한다.
     load_dotenv()
     apikey = os.getenv("STCIS_API_KEY")
@@ -50,7 +55,8 @@ def run_collection(
             area_codes.to_csv(RAW_DIR/AREA_DIR, index=False, encoding="utf-8-sig")
 
         # 5. area_code를 서울 대상으로만 필터링한다.
-        area_codes = area_codes.loc[area_codes["sdCd"].eq("11")].copy()
+        area_codes = area_codes.loc[area_codes["sdCd"].eq(11)].copy()
+        
 
         # 6. 모든 시도/군구/읍면동 에서 목적지로 걸리는 시간 API를 호출한다.
         frame = fetch_od(
